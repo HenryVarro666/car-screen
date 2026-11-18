@@ -8,7 +8,7 @@
 
 ## 安装
 
-需要 Node 18 或更新版本，没有其他依赖。本地看板需要 Node 22.5 或更新版本。
+需要 Node 18 或更新版本，没有其他依赖。测试里有一项（托管版看板）用到 Node 22.5 起自带的 SQLite，旧版本会自动跳过。
 
 ```sh
 git clone https://github.com/HenryVarro666/car-screen.git ~/Documents/GitHub/car-screen
