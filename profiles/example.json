@@ -1,0 +1,42 @@
+{
+  "id": "example-sport-sedan",
+  "label": "Example: sport sedan, premium trim",
+  "timezone": "America/Chicago",
+  "models": [
+    {
+      "name": "Sport Sedan",
+      "idPrefix": "N",
+      "years": { "from": 2021 },
+      "vin": {
+        "require": [
+          { "pattern": "^1HG", "label": "maker" },
+          { "pattern": "^.{3}CM8", "label": "sedan body, premium trim" }
+        ],
+        "reject": [
+          { "pattern": "^.{3}CM7", "reason": "coupe body" }
+        ]
+      }
+    }
+  ],
+  "areas": [
+    { "key": "home", "label": "Home metro" },
+    { "key": "second", "label": "Second metro" }
+  ],
+  "destinations": [
+    { "zip": "00000", "label": "Home" }
+  ],
+  "budget": { "otdCap": 40000, "downPayment": 8000, "apr": 0.0599, "termMonths": 60 },
+  "tax": { "rate": 0.0625, "registrationReserve": 500 },
+  "fields": [
+    { "key": "premiumAudio", "label": "Premium audio", "mode": "eliminate" },
+    { "key": "sportPackage", "label": "Sport package", "mode": "rank" },
+    { "key": "appearancePackage", "label": "Appearance package", "mode": "rank", "values": ["standard", "plus"] },
+    { "key": "adaptiveSteering", "label": "Adaptive steering", "mode": "record" }
+  ],
+  "priceLabels": ["list", "advertised with fees", "asking"],
+  "channels": [
+    { "key": "dealer", "label": "Dealer site, same-VIN page", "answers": "status, price, itemized fees, window sticker" },
+    { "key": "history", "label": "Full history report", "answers": "owners, damage, liens, service, last reported mileage" },
+    { "key": "aggregator", "label": "Listing aggregators", "answers": "leads only; template text is not evidence" }
+  ]
+}
