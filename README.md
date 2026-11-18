@@ -11,7 +11,7 @@
 需要 Node 18 或更新版本，没有其他依赖。本地看板需要 Node 22.5 或更新版本。
 
 ```sh
-git clone <this repo> ~/Documents/GitHub/car-screen
+git clone https://github.com/HenryVarro666/car-screen.git ~/Documents/GitHub/car-screen
 cd ~/Documents/GitHub/car-screen
 ./install.sh
 node --test
