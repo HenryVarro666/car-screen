@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="referrer" content="no-referrer">
+<title>车源对比</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<header class="top">
+  <div>
+    <h1 id="title">车源对比</h1>
+    <p id="subtitle" class="muted"></p>
+  </div>
+  <dl id="budget" class="budget"></dl>
+</header>
+
+<section class="controls" aria-label="筛选">
+  <div id="models" class="segmented" role="tablist"></div>
+  <label>范围
+    <select id="scope">
+      <option value="active">值得看的</option>
+      <option value="stock">全部在库</option>
+      <option value="all">全部（含风险、规则外）</option>
+      <option value="closed">已归档</option>
+    </select>
+  </label>
+  <label>地区 <select id="area"><option value="">不限</option></select></label>
+  <label>落地价不超过 <input id="maxOtd" type="number" inputmode="numeric" min="0" step="500" placeholder="不限"></label>
+  <label>里程不超过 <input id="maxMiles" type="number" inputmode="numeric" min="0" step="5000" placeholder="不限"></label>
+  <label>排序
+    <select id="sort">
+      <option value="rank">推荐程度</option>
+      <option value="otd">落地价</option>
+      <option value="miles">里程</option>
+      <option value="price">车价</option>
+      <option value="checked">最近核对</option>
+    </select>
+  </label>
+  <label class="grow">搜索 <input id="search" type="search" placeholder="编号、车商、城市、VIN"></label>
+  <div id="fields" class="chips" aria-label="选装筛选"></div>
+</section>
+
+<p id="status" class="muted" role="status">正在读取…</p>
+
+<section id="compare" class="compare" hidden aria-label="并排比较"></section>
+
+<main id="list"></main>
+
+<section class="changes">
+  <h2>最近变化</h2>
+  <ul id="changes"></ul>
+</section>
+
+<dialog id="detail" aria-labelledby="detailTitle">
+  <form method="dialog"><button class="close" aria-label="关闭">关闭</button></form>
+  <div id="detailBody"></div>
+</dialog>
+
+<script type="module" src="app.js"></script>
+</body>
+</html>

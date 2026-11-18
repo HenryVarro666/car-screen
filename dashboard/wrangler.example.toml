@@ -1,0 +1,15 @@
+# Copy to wrangler.toml (git-ignored) and fill in the database id.
+name = "car-screen"
+main = "worker.mjs"
+compatibility_date = "2026-01-01"
+compatibility_flags = ["nodejs_compat"]
+
+[assets]
+directory = "./public"
+binding = "ASSETS"
+run_worker_first = true
+
+[[d1_databases]]
+binding = "DB"
+database_name = "car-screen"
+database_id = "<your database id>"
