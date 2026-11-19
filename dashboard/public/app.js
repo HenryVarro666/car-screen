@@ -123,6 +123,53 @@ function renderCompare() {
   </tbody></table><p><button type="button" id="clearCompare">清空比较</button></p>`;
 }
 
+function configurationCard(car) {
+  const config = car.configuration;
+  if (!config) {
+    return `<section class="configuration-card" aria-labelledby="configuration-title">
+      <h3 id="configuration-title">配置分析</h3><p class="configuration-source">待录入同 VIN 配置资料。</p>
+    </section>`;
+  }
+  const levels = { high: "偏高配", mid: "中配", base: "基础配置", unknown: "档位待判定" };
+  const grades = { A: "同 VIN 原厂资料", B: "同 VIN 列项", model: "年款资料" };
+  const groups = [
+    ["present", "已确认配备", "配备项目待补"],
+    ["absent", "明确未配备", "缺失项目尚无结论"],
+    ["unknown", "待核实", "暂无待核项"],
+  ];
+  const cells = groups.map(([status, title, empty]) => {
+    const items = config.items.filter(item => item.status === status);
+    return `<div class="configuration-group" data-status="${status}">
+      <h4>${title}</h4>
+      ${items.length ? `<ul>${items.map(item => `<li>
+        <div class="configuration-item"><strong>${esc(item.name)}</strong>
+          ${item.msrp === undefined ? "" : `<span>${money(item.msrp)}</span>`}</div>
+        ${item.evidence ? `<span class="configuration-source">${grades[item.evidence]}</span>` : ""}
+        <p>${esc(item.detail)}${item.url ? ` ${link(item.url, "依据")}` : ""}</p>
+      </li>`).join("")}</ul>` : `<p class="configuration-source">${empty}</p>`}
+    </div>`;
+  }).join("");
+  let msrp = "";
+  if (config.msrp) {
+    const { base, options, destination, total } = config.msrp;
+    const subtotal = Math.round((base + options + destination) * 100) / 100;
+    const difference = Math.round((total - subtotal) * 100) / 100;
+    msrp = `<div class="configuration-msrp"><h4>原始 MSRP</h4><ul>
+      <li>基础价 <strong>${money(base)}</strong></li>
+      <li>选装小计 <strong>${money(options)}</strong></li>
+      <li>目的地费 <strong>${money(destination)}</strong></li>
+      <li>清单所列总额 <strong>${money(total)}</strong></li>
+    </ul>${difference ? `<p>已列项目合计 ${money(subtotal)}，与清单总额相差 ${money(Math.abs(difference))}，差额待核。</p>` : ""}</div>`;
+  }
+  return `<section class="configuration-card" aria-labelledby="configuration-title">
+    <div class="configuration-heading"><h3 id="configuration-title">配置分析</h3>
+      <strong class="configuration-level">${levels[config.level]}</strong></div>
+    <p class="configuration-analysis">${esc(config.analysis)}</p>
+    <div class="configuration-groups">${cells}</div>${msrp}
+    <p class="configuration-source">${esc(config.date)} · ${config.url ? link(config.url, config.source) : esc(config.source)}</p>
+  </section>`;
+}
+
 async function showDetail(vin) {
   const car = state.data.vehicles.find((c) => c.vin === vin);
   if (!car) return;
@@ -143,6 +190,7 @@ async function showDetail(vin) {
   ].filter(([, v]) => v);
   $("detailBody").innerHTML = `<h2 id="detailTitle">${esc(car.id)} · ${esc(car.year)} ${esc(car.title)}</h2>
     <p class="muted">${esc(car.dealer)}，${esc(car.city)}</p>
+    ${configurationCard(car)}
     <dl>${pairs.map(([k, v]) => `<dt>${esc(k)}</dt><dd>${v}</dd>`).join("")}</dl>
     <h3>记录</h3><div id="history" class="muted">正在读取…</div>`;
   $("detail").showModal();

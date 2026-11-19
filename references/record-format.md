@@ -51,12 +51,34 @@
 | `miles`、`approximateMiles` | 页面只给约数时 `approximateMiles: true` |
 | `quote` | 见下 |
 | `options`、`tried` | 见 `evidence-grades.md` |
+| `configuration` | 按 VIN 保存的配置分析。可以单独录入，见下节 |
 | `arrival` | 只有 `transferable` 能带，写到店时间 |
 | `auction` | 只有 `inventory: "auction"` 能带：`status`、`highBid`、`ends`、`reserve`、`salePrice` |
 | `note` | 650 字以内。`unverified` 必须写明被什么挡住 |
 | `vehicle` | 第一次见到这个 VIN 时必填；之后只在资料有更新时带 |
 
 脚本会拒绝的组合：`unverified` 带报价；`sold` 或 `unavailable` 带报价；已售归档的 VIN 再出现（除非仍是 `sold`）；VIN 校验位不对；`vehicle.year` 和 VIN 的年款位不一致；编号被另一台车用过；同一个 VIN 换了编号。
+
+## 按 VIN 保存配置分析
+
+把 `configuration` 放在带 `vin`、`at`、`source` 和 `url` 的观察里。已收录的 VIN 可用 `job: "configuration"` 单独写入，同一车型的后续库存观察继续复用。新 VIN 也可和首次收录的 `vehicle` 一起写入。`store.mjs check` 返回 `known.configurationDate`，`state --vin` 读出分析。
+
+```json
+{
+  "level": "high",
+  "analysis": "同年款已证实有运动悬挂与驾驶辅助包，配置偏高。",
+  "items": [
+    { "name": "Sport Package", "status": "present", "detail": "同 VIN 车商列出运动悬挂。", "evidence": "B", "msrp": 2000 },
+    { "name": "Track Edition", "status": "absent", "detail": "同市场的订车指南显示本年款没有该版本。", "evidence": "model" },
+    { "name": "Premium Audio", "status": "unknown", "detail": "等同 VIN 的原厂窗贴或音响铭牌。" }
+  ],
+  "msrp": { "base": 50000, "options": 2000, "destination": 1000, "total": 53000 }
+}
+```
+
+- `level` 可为 `high`、`mid`、`base` 或 `unknown`。`analysis` 用于说明与同年款同版本比较的依据。
+- `present` 接受 A、B 或 `model` 级证据。`absent` 要有完整同 VIN 原厂资料（A），或能证明同市场年款不提供该配置的原厂资料（`model`）。资料没写的项目用 `unknown`，不填等级。
+- 配置和单项都可附 HTTPS `url`。`msrp` 可省略，列出时记录资料中的各项金额，网页会显示加总差额。
 
 ## quote
 

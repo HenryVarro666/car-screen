@@ -40,6 +40,30 @@ a { color: var(--accent); }
 .muted { color: var(--muted); }
 .num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
 
+.configuration-card { margin: 16px 0; padding: 16px; border: 1px solid var(--line); border-radius: 10px; }
+.configuration-heading, .configuration-item { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
+.configuration-card h3, .configuration-card h4 { margin: 0; }
+.configuration-heading h3 { font-size: 1.125rem; }
+.configuration-level { color: var(--accent); }
+.configuration-analysis { font-size: 1rem; margin: 9px 0 14px; }
+.configuration-groups { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+.configuration-group { padding: 12px; border: 1px solid var(--line); border-radius: 8px; overflow-wrap: anywhere; }
+.configuration-group h4, .configuration-msrp h4 { font-size: .875rem; }
+.configuration-group[data-status="present"] h4 { color: var(--good); }
+.configuration-group[data-status="absent"] h4 { color: var(--bad); }
+.configuration-group[data-status="unknown"] h4 { color: var(--warn); }
+.configuration-group ul, .configuration-msrp ul { padding: 0; margin: 8px 0 0; list-style: none; }
+.configuration-group li + li { margin-top: 9px; padding-top: 9px; border-top: 1px solid var(--line); }
+.configuration-group p { margin: 3px 0 0; font-size: .875rem; }
+.configuration-item { flex-wrap: wrap; font-size: .875rem; }
+.configuration-item span { white-space: nowrap; font-variant-numeric: tabular-nums; }
+.configuration-msrp { margin-top: 12px; font-size: .875rem; }
+.configuration-msrp ul { display: flex; gap: 4px 20px; flex-wrap: wrap; }
+.configuration-card a { text-decoration: underline; text-underline-offset: 2px; }
+.configuration-source { color: var(--muted); font-size: .8125rem; }
+p.configuration-source { margin: 10px 0 0; }
+@media (max-width: 700px) { .configuration-groups { grid-template-columns: 1fr; } }
+
 .top { display: flex; flex-wrap: wrap; gap: 12px 32px; align-items: flex-end; justify-content: space-between; max-width: 1400px; margin: 0 auto 16px; }
 .top p { margin: 2px 0 0; }
 .budget { display: flex; flex-wrap: wrap; gap: 4px 20px; margin: 0; }

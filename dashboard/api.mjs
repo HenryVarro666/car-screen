@@ -38,6 +38,7 @@ export function buildInventory(events, profile, date = today(profile.timezone)) 
   const ids = new Map(vehicles.map((v) => [v.vin, v.id]));
   const runs = new Map();
   for (const event of events) {
+    if (event.job === "configuration") continue;
     const at = event.data.at;
     const current = runs.get(event.job);
     if (!current || at > current.lastAt) runs.set(event.job, { job: event.job, lastAt: at, count: (current?.count ?? 0) + 1 });

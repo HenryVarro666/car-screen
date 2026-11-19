@@ -52,7 +52,10 @@ if (isMain(import.meta)) {
         vin, checkDigitOk: inspect(vin).valid, modelYear: inspect(vin).modelYear,
         fitsModels: fits.filter((f) => f.matchesModel).map((f) => f.model),
         whyNot: Object.fromEntries(fits.filter((f) => !f.matchesModel).map((f) => [f.model, f.problems])),
-        known: car ? { id: car.id, status: car.confirmed?.inventory ?? car.inventory?.inventory, lastSeen: car.last?.at } : null,
+        known: car ? {
+          id: car.id, status: car.confirmed?.inventory ?? car.inventory?.inventory, lastSeen: car.last?.at,
+          ...(car.configuration ? { configurationDate: car.configuration.date } : {}),
+        } : null,
         archivedSold: soldArchive(events).has(vin),
       }, null, 2));
     } else if (mode === "state") {

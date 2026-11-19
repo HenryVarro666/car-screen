@@ -56,6 +56,50 @@ test("an unverified read does not overwrite the last confirmed status", () => {
   assert.equal(car.quoteRecord.quote.otd, 32375);
 });
 
+const configuration = {
+  level: "high",
+  analysis: "The sport and driver assistance packages put this example above the base trim.",
+  items: [
+    { name: "Sport", detail: "Adaptive dampers", status: "present", evidence: "B", msrp: 2000 },
+    { name: "Track edition", detail: "Not offered in this model year", status: "absent", evidence: "model" },
+    { name: "Premium audio", detail: "The sticker is incomplete", status: "unknown" },
+  ],
+  msrp: { base: 50000, options: 2000, destination: 1000, total: 53100 },
+};
+
+test("a VIN configuration survives stock and quote updates without refreshing the listing date", () => {
+  let events = apply([], run([
+    observation(a, { vehicle: vehicle("N1"), inventory: "listed", quote: { price: 33000, basis: "listing" } }),
+    observation(b, { vehicle: vehicle("N2"), inventory: "listed" }),
+  ]));
+  const input = run([observation(a, { at: "2030-01-11", configuration })],
+    { job: "configuration", completedAt: "2030-01-11T10:00" });
+  events = apply(events, input);
+  let [saved] = currentState(events, profile);
+  assert.equal(saved.last.at, "2030-01-10T09:00:00");
+  assert.equal(saved.configuration.date, "2030-01-11");
+  assert.equal(prepareRun(input, profile, events).fresh.length, 0);
+
+  events = apply(events, run([observation(a, { at: "2030-01-12", inventory: "on_hold", quote: { price: 32000, basis: "listing" } })],
+    { completedAt: "2030-01-12T10:00" }));
+  const [car, other] = currentState(events, profile);
+  assert.equal(car.inventory.inventory, "on_hold");
+  assert.equal(car.quoteRecord.quote.price, 32000);
+  assert.deepEqual(car.configuration, saved.configuration);
+  assert.equal(other.configuration, undefined);
+});
+
+test("a seller listing cannot establish the absence of an option", () => {
+  const absent = { ...configuration.items[1], evidence: "B" };
+  assert.throws(() => prepareRun(run([observation(a, { configuration: { ...configuration, items: [absent] } })]),
+    profile, []), /absence requires/);
+});
+
+test("configuration-only runs cannot change inventory", () => {
+  const input = run([observation(a, { configuration, inventory: "available" })], { job: "configuration" });
+  assert.throws(() => prepareRun(input, profile, []), /accept only configuration assessments/);
+});
+
 test("changes and the short report", () => {
   let events = apply([], run([observation(a, { vehicle: vehicle("N1"), inventory: "listed", quote: { price: 30000, basis: "dealer page" } })]));
   events = apply(events, run([
