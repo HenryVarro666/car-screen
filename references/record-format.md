@@ -76,7 +76,7 @@
 }
 ```
 
-- `level` 可为 `high`、`mid`、`base` 或 `unknown`。`analysis` 用于说明与同年款同版本比较的依据。
+- `level` 可为 `top`（顶配）、`high`（高配）、`mid`（中配）、`base`（低配）或 `unknown`（档位待判定）。`analysis` 说明同年款同版本的主要选装依据。顶配应有同 VIN 出厂资料支持主要高阶选装，低配需要能核实主要高阶选装缺失。资料有限时用 `unknown`。
 - `present` 接受 A、B 或 `model` 级证据。`absent` 要有完整同 VIN 原厂资料（A），或能证明同市场年款不提供该配置的原厂资料（`model`）。资料没写的项目用 `unknown`，不填等级。
 - 配置和单项都可附 HTTPS `url`。`msrp` 可省略，列出时记录资料中的各项金额，网页会显示加总差额。
 

@@ -10,6 +10,14 @@ const STATUS = {
   unavailable: "已下架", sold: "已售", unverified: "本次没读到", private_lead: "私人线索", auction: "拍卖中",
 };
 const TONE = { available: "good", transferable: "good", listed: "", on_hold: "warn", coming_soon: "warn", unavailable: "bad", sold: "bad", unverified: "warn", private_lead: "", auction: "good" };
+const configurationLevels = {
+  top: { label: "顶配", order: 0 },
+  high: { label: "高配", order: 1 },
+  mid: { label: "中配", order: 2 },
+  base: { label: "低配", order: 3 },
+  unknown: { label: "档位待判定" },
+};
+const configurationTier = car => configurationLevels[car.configuration?.level] ?? configurationLevels.unknown;
 
 const state = { data: null, model: "", fields: new Set(), compare: new Set() };
 
@@ -25,6 +33,22 @@ function optionTag(car, field) {
 const fieldsOf = (car) => state.data.profile.fields.filter((f) => car.fieldKeys.includes(f.key));
 const otdOf = (car) => car.quoteRecord?.quote?.otd;
 const checkedOf = (car) => (car.confirmed?.at ?? car.last?.at ?? "").slice(0, 10);
+const sortValues = {
+  rank: car => car.rank,
+  configuration: car => configurationTier(car).order,
+  otd: otdOf,
+  miles: car => car.miles,
+  price: car => car.quoteRecord?.quote?.price,
+  checked: checkedOf,
+};
+const sortDirections = {
+  rank: ["推荐在前", "推荐在后"],
+  configuration: ["配置高到低", "配置低到高"],
+  otd: ["低价在前", "高价在前"],
+  price: ["低价在前", "高价在前"],
+  miles: ["少里程在前", "多里程在前"],
+  checked: ["最近核对在前", "最早核对在前"],
+};
 
 function visible(car) {
   const scope = $("scope").value;
@@ -53,17 +77,18 @@ function visible(car) {
   return true;
 }
 
-function sorted(cars) {
-  const by = $("sort").value;
-  const big = Number.MAX_SAFE_INTEGER;
-  const key = {
-    rank: (c) => c.rank,
-    otd: (c) => otdOf(c) ?? big,
-    miles: (c) => c.miles ?? big,
-    price: (c) => c.quoteRecord?.quote?.price ?? big,
-  }[by];
-  if (by === "checked") return [...cars].sort((a, b) => checkedOf(b).localeCompare(checkedOf(a)) || a.rank - b.rank);
-  return [...cars].sort((a, b) => key(a) - key(b) || a.rank - b.rank);
+function compareSortValues(a, b, direction) {
+  const known = value => typeof value === "string" ? value.length > 0 : Number.isFinite(value);
+  const knownA = known(a);
+  const knownB = known(b);
+  if (!knownA || !knownB) return Number(knownB) - Number(knownA);
+  return direction * (typeof a === "string" ? b.localeCompare(a) : a - b);
+}
+
+function sorted(cars, by, direction) {
+  const value = sortValues[by];
+  return [...cars].sort((a, b) => compareSortValues(value(a), value(b), direction)
+    || (by === "configuration" ? a.id.localeCompare(b.id, "en", { numeric: true }) : a.rank - b.rank));
 }
 
 function row(car) {
@@ -74,6 +99,7 @@ function row(car) {
   return `<tr>
     <td><input type="checkbox" data-compare="${esc(car.vin)}" aria-label="比较 ${esc(car.id)}" ${state.compare.has(car.vin) ? "checked" : ""}></td>
     <td class="car"><button type="button" data-detail="${esc(car.vin)}">${esc(car.id)} · ${esc(car.year)} ${esc(car.title)}</button>
+      <small>${configurationTier(car).label}</small>
       <small>${esc(car.dealer)}，${esc(car.city)}${safeUrl(car.listing) ? ` · ${link(car.listing, "原页")}` : ""}</small>${auction}</td>
     <td><span class="tag ${TONE[status] ?? ""}">${esc(STATUS[status] ?? status)}</span><br><small class="muted">${esc(checkedOf(car))}${car.rec.stale ? " · 待复核" : ""}</small></td>
     <td class="num">${car.miles !== undefined ? car.miles.toLocaleString("en-US") + (car.approximateMiles ? " 约" : "") : "待核"}</td>
@@ -88,16 +114,23 @@ function row(car) {
 const HEAD = `<thead><tr><th><span aria-hidden="true">比较</span></th><th>车</th><th>状态</th><th class="num">里程</th><th class="num">车价</th><th class="num">估算落地</th><th class="num">月供</th><th>选装（证据等级）</th><th>为什么排这里</th></tr></thead>`;
 
 function renderList() {
+  const by = $("sort").value;
+  const sortOrder = $("sort-order");
+  const direction = sortOrder.value === "reverse" ? -1 : 1;
+  const [forward, reverse] = sortDirections[by];
+  sortOrder.options[0].textContent = "正序 · " + forward;
+  sortOrder.options[1].textContent = "反序 · " + reverse;
   const cars = state.data.vehicles.filter(visible);
   const total = state.data.vehicles.length;
   $("status").textContent = `显示 ${cars.length} 台，共 ${total} 台。核对日期 ${state.data.today}。`;
   if (!cars.length) { $("list").innerHTML = `<p class="muted">没有符合条件的车。放宽筛选，或把范围改成"全部"。</p>`; return; }
   const table = (list) => `<div class="tablewrap"><table>${HEAD}<tbody>${list.map(row).join("")}</tbody></table></div>`;
-  if ($("sort").value !== "rank") { $("list").innerHTML = table(sorted(cars)); return; }
-  const stages = state.data.profile.stages;
-  $("list").innerHTML = stages.map((label, index) => {
+  if (by !== "rank") { $("list").innerHTML = table(sorted(cars, by, direction)); return; }
+  const stages = state.data.profile.stages.map((label, index) => ({ label, index }));
+  if (direction === -1) stages.reverse();
+  $("list").innerHTML = stages.map(({ label, index }) => {
     const group = cars.filter((c) => c.rec.stage === index);
-    return group.length ? `<section class="stage"><h2>${esc(label)} <span>${group.length} 台</span></h2>${table(sorted(group))}</section>` : "";
+    return group.length ? `<section class="stage"><h2>${esc(label)} <span>${group.length} 台</span></h2>${table(sorted(group, by, direction))}</section>` : "";
   }).join("");
 }
 
@@ -110,7 +143,8 @@ function renderCompare() {
   const line = (label, cell) => `<tr><th scope="row">${esc(label)}</th>${cars.map((c) => `<td>${cell(c)}</td>`).join("")}</tr>`;
   box.innerHTML = `<table><tbody>
     ${line("车", (c) => `<strong>${esc(c.id)}</strong> ${esc(c.year)} ${esc(c.title)}<br>${link(c.listing, c.dealer)}`)}
-    ${line("档位", (c) => esc(c.rec.stageLabel))}
+    ${line("推荐分组", (c) => esc(c.rec.stageLabel))}
+    ${line("配置档位", (c) => configurationTier(c).label)}
     ${line("状态", (c) => `${esc(STATUS[c.rec.status] ?? c.rec.status)}（${esc(checkedOf(c))}）`)}
     ${line("里程", (c) => (c.miles !== undefined ? c.miles.toLocaleString("en-US") : "待核"))}
     ${line("车价", (c) => (c.quoteRecord ? money(c.quoteRecord.quote.price) : "待核"))}
@@ -127,10 +161,11 @@ function configurationCard(car) {
   const config = car.configuration;
   if (!config) {
     return `<section class="configuration-card" aria-labelledby="configuration-title">
-      <h3 id="configuration-title">配置分析</h3><p class="configuration-source">待录入同 VIN 配置资料。</p>
+      <div class="configuration-heading"><h3 id="configuration-title">配置分析</h3>
+        <strong class="configuration-level">${configurationTier(car).label}</strong></div>
+      <p class="configuration-source">待录入同 VIN 配置资料。</p>
     </section>`;
   }
-  const levels = { high: "偏高配", mid: "中配", base: "基础配置", unknown: "档位待判定" };
   const grades = { A: "同 VIN 原厂资料", B: "同 VIN 列项", model: "年款资料" };
   const groups = [
     ["present", "已确认配备", "配备项目待补"],
@@ -163,7 +198,7 @@ function configurationCard(car) {
   }
   return `<section class="configuration-card" aria-labelledby="configuration-title">
     <div class="configuration-heading"><h3 id="configuration-title">配置分析</h3>
-      <strong class="configuration-level">${levels[config.level]}</strong></div>
+      <strong class="configuration-level">${configurationTier(car).label}</strong></div>
     <p class="configuration-analysis">${esc(config.analysis)}</p>
     <div class="configuration-groups">${cells}</div>${msrp}
     <p class="configuration-source">${esc(config.date)} · ${config.url ? link(config.url, config.source) : esc(config.source)}</p>

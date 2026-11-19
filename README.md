@@ -70,7 +70,7 @@ node scripts/render.mjs record --profile $P --data $D --vin <VIN>
 node dashboard/serve.mjs --profile $P --data $D
 ```
 
-然后打开 http://localhost:4173 ，点单车标题查看配置分析。配置卡按 VIN 保存，展示已配备、明确未配备、待核项目与配置档位的理由。录入格式见 [记录格式](references/record-format.md#按-vin-保存配置分析)。部署到 Cloudflare Workers 的做法见 `dashboard/README.md`。
+然后打开 http://localhost:4173 ，点单车标题查看配置分析。配置卡按 VIN 保存，展示已配备、明确未配备、待核项目与配置档位的理由。排序支持正序和反序，按配置档位排序时，待判定始终排在最后。录入格式见 [记录格式](references/record-format.md#按-vin-保存配置分析)。部署到 Cloudflare Workers 的做法见 `dashboard/README.md`。
 
 ## 文件
 

@@ -78,14 +78,22 @@ test("a VIN configuration survives stock and quote updates without refreshing th
   let [saved] = currentState(events, profile);
   assert.equal(saved.last.at, "2030-01-10T09:00:00");
   assert.equal(saved.configuration.date, "2030-01-11");
+  assert.equal(saved.configuration.level, "high");
   assert.equal(prepareRun(input, profile, events).fresh.length, 0);
+
+  const top = { ...configuration, level: "top", analysis: "A complete build sheet confirms the top option group." };
+  events = apply(events, run([observation(a, { at: "2030-01-11T11:00", configuration: top })],
+    { job: "configuration", completedAt: "2030-01-11T11:00" }));
+  const [upgraded] = currentState(events, profile);
+  assert.equal(upgraded.configuration.level, "top");
+  assert.equal(upgraded.last.at, saved.last.at);
 
   events = apply(events, run([observation(a, { at: "2030-01-12", inventory: "on_hold", quote: { price: 32000, basis: "listing" } })],
     { completedAt: "2030-01-12T10:00" }));
   const [car, other] = currentState(events, profile);
   assert.equal(car.inventory.inventory, "on_hold");
   assert.equal(car.quoteRecord.quote.price, 32000);
-  assert.deepEqual(car.configuration, saved.configuration);
+  assert.deepEqual(car.configuration, upgraded.configuration);
   assert.equal(other.configuration, undefined);
 });
 
